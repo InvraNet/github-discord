@@ -12,6 +12,7 @@
   },
   "private": true,
   "dependencies": {
+    "@discordjs/rest": "^2.4.0",
     "body-parser": "^1.20.3",
     "discord.js": "^14.16.2",
     "express": "^4.21.0",

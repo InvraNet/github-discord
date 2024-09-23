@@ -1,4 +1,6 @@
 const { Client, GatewayIntentBits, EmbedBuilder } = require('discord.js');
+const { REST } = require('@discordjs/rest');
+const { Routes } = require('discord-api-types/v9');
 const express = require('express');
 const bodyParser = require('body-parser');
 const fs = require('fs');
@@ -8,14 +10,16 @@ const config = require('./config.json');
 const app = express();
 app.use(bodyParser.json());
 
-const client = new Client({ intents: [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent
+const client = new Client({
+    intents: [
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.MessageContent,
+        GatewayIntentBits.DirectMessages
     ]
 });
-const commands = new Map();
 
+const commands = new Map();
 const commandFiles = fs.readdirSync(path.join(__dirname, 'commands')).filter(file => file.endsWith('.js'));
 
 for (const file of commandFiles) {
@@ -23,32 +27,41 @@ for (const file of commandFiles) {
     commands.set(command.name, command);
 }
 
-client.once('ready', () => {
+const rest = new REST({ version: '9' }).setToken(config.discordToken);
+
+client.once('ready', async () => {
     console.log(`Logged in as ${client.user.tag}`);
+
+    const commandData = Array.from(commands.values()).map(command => ({
+        name: command.name,
+        description: command.description,
+        options: command.options || [],
+    }));
+
+    try {
+        await rest.put(Routes.applicationCommands(config.clientId), { body: commandData });
+        console.log('Slash commands registered globally successfully.');
+    } catch (error) {
+        console.error('Error registering commands:', error);
+    }
 });
 
-client.on('messageCreate', async message => {
-    console.log(`Message: ${message.content}`);
-    if (!message.content.startsWith(config.discordInterfacingPrefix)) return;
+client.on('interactionCreate', async interaction => {
+    if (!interaction.isCommand()) return;
 
-    console.log(`Message received: ${message.content}`);
-
-    const args = message.content.slice(config.discordInterfacingPrefix.length).trim().split(/ +/);
-    const commandName = args.shift().toLowerCase();
-
-    const command = commands.get(commandName);
+    const command = commands.get(interaction.commandName);
     if (!command) {
-        console.warn(`Command "${commandName}" not found.`);
+        console.warn(`Command "${interaction.commandName}" not found.`);
         return;
     }
 
-    console.log(`Executing command: ${commandName} with args: ${args.join(', ')}`);
+    console.log(`Executing command: ${interaction.commandName} with args: ${interaction.options.data.map(option => option.value).join(', ')}`);
 
     try {
-        await command.execute(message, args);
+        await command.execute(interaction);
     } catch (error) {
         console.error('Error executing command:', error);
-        await message.reply('There was an error executing that command.');
+        await interaction.reply({ content: 'There was an error executing that command.', ephemeral: true });
     }
 });
 
