@@ -46,10 +46,17 @@ app.post('/webhook', (req, res) => {
     console.log('Received webhook:', JSON.stringify(req.body, null, 2)); // Log the full request body
 
     const event = req.headers['x-github-event'];
-    console.log(`GitHub event: ${event}`);
+    console.log(`GitHub event: ${event}`); // Log the event type
 
     if (event === 'push') {
         const { repository, pusher } = req.body;
+
+        // Check if both repository and pusher exist
+        if (!repository || !pusher) {
+            console.error('Missing repository or pusher in push event:', req.body);
+            return res.status(400).send('Bad Request: Missing data');
+        }
+
         const guildId = config.discordGuildID;
         const channelId = config.servers[guildId].rules.push;
         const channel = client.channels.cache.get(channelId);
@@ -60,6 +67,8 @@ app.post('/webhook', (req, res) => {
         } else {
             console.warn(`Channel ID "${channelId}" not found in guild "${guildId}".`);
         }
+    } else {
+        console.warn(`Unhandled event type: ${event}`);
     }
 
     res.status(200).send('Event received');
