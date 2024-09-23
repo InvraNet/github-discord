@@ -43,13 +43,19 @@ client.on('messageCreate', async message => {
 });
 
 app.post('/webhook', (req, res) => {
-    console.log('Received webhook:', JSON.stringify(req.body, null, 2)); // Log the full request body
+    // Log the entire request body
+    console.log('Received webhook:', JSON.stringify(req.body, null, 2)); // Pretty-print JSON
 
     const event = req.headers['x-github-event'];
     console.log(`GitHub event: ${event}`); // Log the event type
 
+    // Check if the event is a push
     if (event === 'push') {
         const { repository, pusher } = req.body;
+
+        // Log the repository and pusher for debugging
+        console.log('Repository:', repository);
+        console.log('Pusher:', pusher);
 
         // Check if both repository and pusher exist
         if (!repository || !pusher) {
@@ -70,7 +76,6 @@ app.post('/webhook', (req, res) => {
     } else {
         console.warn(`Unhandled event type: ${event}`);
     }
-
     res.status(200).send('Event received');
 });
 
