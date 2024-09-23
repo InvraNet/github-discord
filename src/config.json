@@ -1,9 +1,9 @@
 {
-  "discordToken": "MTI4MTYzMzMwNTM5Mjk3NTkxNA.GJje_o.WclIZpnskFViPdSbPjmZzewiUOt2cGaFh5T0Xk",
+  "discordToken": "MTI4NzcwNjY1ODk1NjM3ODEyNA.GMakKe.EjPvTCyBOj0VdZzPiFNHY5OW4yOTMepnKBD57s",
   "webhookPort": 3000,
   "discordInterfacingPrefix": ">",
   "discordGuildID": "1126691878096609360",
-  "clientId": "1281633305392975914",
+  "clientId": "1287706658956378124",
   "servers": {
     "1126691878096609360": {
       "rules": {
