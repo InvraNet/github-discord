@@ -4,6 +4,8 @@ module.exports = {
     name: 'repoinfo',
     description: 'Get detailed information about a specific repository.',
     async execute(message, args) {
+        console.log(`Received args for repoinfo: ${args}`);
+
         const repoUrl = args[0];
         const urlParts = repoUrl.split('/');
 
@@ -13,6 +15,8 @@ module.exports = {
 
         const username = urlParts[urlParts.length - 2];
         const repoName = urlParts[urlParts.length - 1];
+
+        console.log(`Fetching repo info for: ${username}/${repoName}`);
 
         const response = await fetch(`https://api.github.com/repos/${username}/${repoName}`);
         const repoInfo = await response.json();

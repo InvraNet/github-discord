@@ -1,4 +1,4 @@
-const { Client, GatewayIntentBits } = require('discord.js');
+const { Client, GatewayIntentBits, EmbedBuilder } = require('discord.js');
 const express = require('express');
 const bodyParser = require('body-parser');
 const fs = require('fs');
@@ -8,7 +8,12 @@ const config = require('./config.json');
 const app = express();
 app.use(bodyParser.json());
 
-const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages] });
+const client = new Client({ intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent
+    ]
+});
 const commands = new Map();
 
 const commandFiles = fs.readdirSync(path.join(__dirname, 'commands')).filter(file => file.endsWith('.js'));
@@ -23,9 +28,12 @@ client.once('ready', () => {
 });
 
 client.on('messageCreate', async message => {
-    if (!message.content.startsWith(config.discordInterfacingPrefix) || message.author.bot) return;
+    console.log(`Message: ${message.content}`);
+    if (!message.content.startsWith(config.discordInterfacingPrefix)) return;
 
-    const args = message.content.slice(1).trim().split(/ +/);
+    console.log(`Message received: ${message.content}`);
+
+    const args = message.content.slice(config.discordInterfacingPrefix.length).trim().split(/ +/);
     const commandName = args.shift().toLowerCase();
 
     const command = commands.get(commandName);
@@ -33,6 +41,8 @@ client.on('messageCreate', async message => {
         console.warn(`Command "${commandName}" not found.`);
         return;
     }
+
+    console.log(`Executing command: ${commandName} with args: ${args.join(', ')}`);
 
     try {
         await command.execute(message, args);
@@ -43,29 +53,38 @@ client.on('messageCreate', async message => {
 });
 
 app.post('/webhook', (req, res) => {
-    // Log the raw request body as it is received
-    console.log('Received webhook:', req.body); // This logs the parsed body
-    console.log('Raw body:', JSON.stringify(req.rawBody, null, 2)); // For raw data, you'll need to set up middleware to capture it
-
     const event = req.headers['x-github-event'];
     console.log(`GitHub event: ${event}`);
 
     if (event === 'push') {
-        const { repository, pusher } = req.body;
+        const { repository, pusher, head_commit } = req.body;
 
-        // Check if both repository and pusher exist
-        if (!repository || !pusher) {
-            console.error('Missing repository or pusher in push event:', req.body);
+        if (!repository || !pusher || !head_commit) {
+            console.error('Missing required fields in push event:', req.body);
             return res.status(400).send('Bad Request: Missing data');
         }
+
+        const embed = new EmbedBuilder()
+            .setColor('#0099ff')
+            .setTitle('New Activity')
+            .addFields(
+                { name: 'Action:', value: 'Push', inline: true },
+                { name: 'Action Tag:', value: `[${repository.default_branch} - ${head_commit.id.substring(0, 7)}](${head_commit.url})`, inline: true },
+                { name: 'Pushed By:', value: `[${pusher.name}](https://github.com/${pusher.name})`, inline: true },
+                { name: 'Action Date:', value: `<t:${Math.floor(Date.parse(head_commit.timestamp) / 1000)}:F>`, inline: true },
+                { name: 'Commit Message:', value: head_commit.message, inline: false }
+            )
+            .setURL(repository.html_url)
+            .setFooter({ text: `Repository: ${repository.full_name}`, iconURL: repository.owner.avatar_url })
+            .setTimestamp();
 
         const guildId = config.discordGuildID;
         const channelId = config.servers[guildId].rules.push;
         const channel = client.channels.cache.get(channelId);
         if (channel) {
-            channel.send(`New push by ${pusher.name} in ${repository.name}`)
-                .then(() => console.log('Message sent to Discord channel.'))
-                .catch(err => console.error('Error sending message to Discord:', err));
+            channel.send({ embeds: [embed] })
+                .then(() => console.log('Embed sent to Discord channel.'))
+                .catch(err => console.error('Error sending embed to Discord:', err));
         } else {
             console.warn(`Channel ID "${channelId}" not found in guild "${guildId}".`);
         }
