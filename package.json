@@ -1,0 +1,20 @@
+{
+  "name": "github-discord",
+  "version": "1.2.1",
+  "description": "A Discord bot which interacts with GitHub API, and notifies on certain actions to do with github, interfaces with api.github.com, and webhooks. Made in Discord-JS.",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "node ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/InvraNet/github-discord.git"
+  },
+  "private": true,
+  "dependencies": {
+    "body-parser": "^1.20.3",
+    "discord.js": "^14.16.2",
+    "express": "^4.21.0",
+    "node-fetch": "2"
+  }
+}

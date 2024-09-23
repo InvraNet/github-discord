@@ -1,0 +1,13 @@
+{
+  "discordToken": "MTI4NzY3MTAwNTczNjczMDY2NQ.G8igFI.gtJSeHMWm7KCPs7V6bWparg51xZkuLypBobq8Y",
+  "webhookPort": 3000,
+  "discordInterfacingPrefix": ">",
+  "discordGuildID": "1126691878096609360",
+  "servers": {
+    "1126691878096609360": {
+      "rules": {
+        "push": "1287671489910542348"
+      }
+    }
+  }
+}
