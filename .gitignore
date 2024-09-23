@@ -1,5 +1,6 @@
 # Hide certain files
 src/config.json
+.idea/
 
 # NodeJS files
 logs
